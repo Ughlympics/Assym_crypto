@@ -6,12 +6,9 @@ import (
 )
 
 func main() {
-	result := gens.LowLehmer(1, 10)
+	result := gens.LowLehmer(1, 20)
 	fmt.Println("Result:", result)
-
-	for i := 1; i <= 5; i++ {
-		fmt.Println("n =", i, " → ", gens.LowLehmer(1, uint64(i)))
-	}
+	gens.Prob_test(result, 0.05)
 
 	seq20 := gens.L20(12345, 30)
 	fmt.Println("L20:", seq20)
