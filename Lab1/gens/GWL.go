@@ -44,3 +44,28 @@ func BitsToBytes(bits []bool) []byte {
 	}
 	return bytes
 }
+
+func rotl32(x uint32) uint32 {
+	return (x << 1) | (x >> 31)
+}
+
+func rotr32(x uint32) uint32 {
+	return (x >> 1) | (x << 31)
+}
+
+func WolframGenerator(r0 uint32, n int) []bool {
+	if r0 == 0 {
+		panic("Start condition r0 must not be zero")
+	}
+
+	r := r0
+	bits := make([]bool, n)
+
+	for i := 0; i < n; i++ {
+		bits[i] = (r & 1) == 1
+
+		r = rotl32(r) ^ (r | rotr32(r))
+	}
+
+	return bits
+}
