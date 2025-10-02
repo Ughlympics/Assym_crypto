@@ -1,5 +1,10 @@
 package gens
 
+import (
+	"fmt"
+	"os"
+)
+
 func GenerateL11(seed []bool, n int) []bool {
 	x := append([]bool(nil), seed...)
 	for i := len(seed); i < n; i++ {
@@ -68,4 +73,17 @@ func WolframGenerator(r0 uint32, n int) []bool {
 	}
 
 	return bits
+}
+
+func LibrarianGenerator(filename string, n int) ([]byte, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	if len(data) < n {
+		return nil, fmt.Errorf("missing characters in text: need %d, but got only %d", n, len(data))
+	}
+
+	return data[:n], nil
 }
