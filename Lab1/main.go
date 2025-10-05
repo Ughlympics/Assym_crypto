@@ -56,4 +56,13 @@ func main() {
 	}
 
 	fmt.Printf("BM bytes: %x\n", seq)
+
+	//
+	seq2, err2 := gens.BBSGenerator(32)
+	if err != nil {
+		fmt.Println("Error:", err2)
+		return
+	}
+
+	fmt.Printf("BBS bytes: %x\n", seq2)
 }

@@ -5,14 +5,23 @@ import (
 	"math/big"
 )
 
-var pStr = "CEA42B987C44FA642D80AD9F51F10457690DEF10C83D0BC1BCEE12FC3B6093E3"
-var aStr = "5B88C41246790891C095E2878880342E88C79974303BD0400B090FE38A688356"
+// Blum-Micali values
+var pStr1 = "CEA42B987C44FA642D80AD9F51F10457690DEF10C83D0BC1BCEE12FC3B6093E3"
+var aStr1 = "5B88C41246790891C095E2878880342E88C79974303BD0400B090FE38A688356"
 
-var p, _ = new(big.Int).SetString(pStr, 16)
-var a, _ = new(big.Int).SetString(aStr, 16)
+var p1, _ = new(big.Int).SetString(pStr1, 16)
+var a1, _ = new(big.Int).SetString(aStr1, 16)
+
+// Blum-Blum-Shub values
+var pStr2 = "D5BBB96D30086EC484EBA3D7F9CAEB07"
+var aStr2 = "425D2B9BFDB25B9CF6C416CC6E37B59C1F"
+
+var p2, _ = new(big.Int).SetString(pStr2, 16)
+var a2, _ = new(big.Int).SetString(aStr2, 16)
+var m = new(big.Int).Mul(p2, a2)
 
 func BMGenerator(n int) ([]byte, error) {
-	T0, err := rand.Int(rand.Reader, p)
+	T0, err := rand.Int(rand.Reader, p1)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +32,7 @@ func BMGenerator(n int) ([]byte, error) {
 	T := new(big.Int).Set(T0)
 	bytes := make([]byte, n)
 
-	interval := new(big.Int).Sub(p, big.NewInt(1))
+	interval := new(big.Int).Sub(p1, big.NewInt(1))
 	interval.Div(interval, big.NewInt(256))
 
 	for i := 0; i < n; i++ {
@@ -34,7 +43,28 @@ func BMGenerator(n int) ([]byte, error) {
 		}
 		bytes[i] = byte(k.Int64())
 
-		T.Exp(a, T, p)
+		T.Exp(a1, T, p1)
+	}
+
+	return bytes, nil
+}
+
+func BBSGenerator(n int) ([]byte, error) {
+	r0, err := rand.Int(rand.Reader, p2)
+	if err != nil {
+		return nil, err
+	}
+	if r0.Sign() == 0 {
+		r0 = big.NewInt(1)
+	}
+
+	r := new(big.Int).Set(r0)
+	bytes := make([]byte, n)
+
+	for i := 0; i < n; i++ {
+		r.Exp(r, big.NewInt(2), m)
+		mod256 := new(big.Int).Mod(r, big.NewInt(256))
+		bytes[i] = byte(mod256.Int64())
 	}
 
 	return bytes, nil
