@@ -104,3 +104,60 @@ func NormInv(p float64) float64 {
 			(((d1*q+d2)*q+d3)*q + d4)
 	}
 }
+
+func Ind_test(data []byte, alpha float64) {
+	m := len(data)
+	if m < 2 {
+		fmt.Println("Помилка: послідовність занадто коротка")
+		return
+	}
+	nPairs := m / 2
+	if nPairs == 0 {
+		fmt.Println("Помилка: немає пар для аналізу")
+		return
+	}
+
+	var counts [256][256]int64
+	var rowSums, colSums [256]int64
+
+	for i := 0; i < nPairs; i++ {
+		b1 := data[2*i]
+		b2 := data[2*i+1]
+		counts[b1][b2]++
+		rowSums[b1]++
+		colSums[b2]++
+	}
+
+	chi := 0.0
+	n := float64(nPairs)
+	minExpected := math.Inf(1)
+	zeroExpectedCells := 0
+
+	for i := 0; i < 256; i++ {
+		for j := 0; j < 256; j++ {
+			expected := (float64(rowSums[i]) * float64(colSums[j])) / n
+			if expected == 0 {
+				zeroExpectedCells++
+				continue
+			}
+			if expected < minExpected {
+				minExpected = expected
+			}
+			diff := float64(counts[i][j]) - expected
+			chi += diff * diff / expected
+		}
+	}
+
+	df := float64(255 * 255)
+	quant := ChiSquareQuantile(1.0-alpha, df)
+	pass := chi <= quant
+
+	fmt.Printf("χ² = %.6f\n", chi)
+	fmt.Printf("Crit value (α=%.4f, df=%d) ≈ %.6f\n", alpha, 255*255, quant)
+
+	if pass {
+		fmt.Println("Independence hypothesis accepted.")
+	} else {
+		fmt.Println("Independence hypothesis rejected.")
+	}
+}
