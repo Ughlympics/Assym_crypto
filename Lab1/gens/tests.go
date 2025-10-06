@@ -31,9 +31,9 @@ func Prob_test(data []byte, alpha float64) {
 	quantile := ChiSquareQuantile(1.0-alpha, k)
 
 	pass := chiStat <= quantile
-	fmt.Printf("hi^2 stat = %.6f\n", chiStat)
-	fmt.Printf("crit value (α=%.4f, k=%.0f) ≈ %.6f\n", alpha, k, quantile)
-	fmt.Printf("hypothesis H0 accepted: %v\n", pass)
+	fmt.Printf("χ² stat = %.6f\n", chiStat)
+	fmt.Printf("Crit value (α=%.4f, k=%.0f) ≈ %.6f\n", alpha, k, quantile)
+	fmt.Printf("Hypothesis H0 accepted: %v\n", pass)
 }
 
 func ChiSquareQuantile(p, k float64) float64 {
@@ -108,12 +108,12 @@ func NormInv(p float64) float64 {
 func Ind_test(data []byte, alpha float64) {
 	m := len(data)
 	if m < 2 {
-		fmt.Println("Помилка: послідовність занадто коротка")
+		fmt.Println("Error: not enough data for independence test")
 		return
 	}
 	nPairs := m / 2
 	if nPairs == 0 {
-		fmt.Println("Помилка: немає пар для аналізу")
+		fmt.Println("Error: no pairs to analyze")
 		return
 	}
 
@@ -160,4 +160,78 @@ func Ind_test(data []byte, alpha float64) {
 	} else {
 		fmt.Println("Independence hypothesis rejected.")
 	}
+}
+
+func Homogeneity_test(data []byte, alpha float64, r int) {
+	m := len(data)
+	if m < 2 {
+		fmt.Println("Error: not enough data for homogeneity test")
+		return
+	}
+
+	mPrime := m / r
+	n := mPrime * r
+
+	var counts [256][]int64
+	for i := 0; i < 256; i++ {
+		counts[i] = make([]int64, r)
+	}
+
+	for j := 0; j < r; j++ {
+		start := j * mPrime
+		end := start + mPrime
+		for _, b := range data[start:end] {
+			counts[b][j]++
+		}
+	}
+
+	var rowSums [256]int64
+	for i := 0; i < 256; i++ {
+		for j := 0; j < r; j++ {
+			rowSums[i] += counts[i][j]
+		}
+	}
+
+	chi := 0.0
+	nf := float64(n)
+	minExpected := math.Inf(1)
+
+	for i := 0; i < 256; i++ {
+		for j := 0; j < r; j++ {
+			expected := (float64(rowSums[i]) * float64(mPrime)) / nf
+			if expected == 0 {
+				continue
+			}
+			if expected < minExpected {
+				minExpected = expected
+			}
+			diff := float64(counts[i][j]) - expected
+			chi += diff * diff / expected
+		}
+	}
+
+	df := float64(255 * (r - 1))
+	quant := ChiSquareQuantile(1-alpha, df)
+	pass := chi <= quant
+
+	fmt.Printf("Number of segments: %d (length of each = %d)\n", r, mPrime)
+	fmt.Printf("χ² = %.6f\n", chi)
+	fmt.Printf("Critical value (α=%.4f, df=%.0f) ≈ %.6f\n", alpha, df, quant)
+
+	if pass {
+		fmt.Println("Homogeneity hypothesis accepted.")
+	} else {
+		fmt.Println("Homogeneity hypothesis rejected.")
+	}
+
+	if minExpected < 5 {
+		fmt.Printf("Warning: minimum expected value %.3f < 5 — results may be inaccurate.\n", minExpected)
+	}
+
+}
+
+func QualityTest(data []byte, alpha float64, r int) {
+	Prob_test(data, alpha)
+	Ind_test(data, alpha)
+	Homogeneity_test(data, alpha, r)
 }
