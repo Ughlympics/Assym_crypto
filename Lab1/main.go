@@ -39,7 +39,7 @@ func main() {
 	//gens.QualityTest(data4, alpha, r)
 	seedL20 := []bool{true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false}
 	checkBits := 800000
-	data4 := gens.GenerateL20(seedL20, 800000)
+	data4 := gens.GenerateL20(seedL20, 8000000)
 
 	gens.QualityTest(data4, alpha, r)
 
