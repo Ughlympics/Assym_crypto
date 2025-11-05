@@ -36,10 +36,16 @@ func BBSGenerator_byte(n int) (*big.Int, error) {
 }
 
 func MillerRabinTest(p *big.Int, k int) (bool, error) {
-	undp1 := new(big.Int).Sub(p, big.NewInt(1))
-	d, r := decomposition(undp1)
-	fmt.Println("d:", d)
-	fmt.Println("r:", r)
+	for i := 0; i < k; i++ {
+		x, ok := step1(p)
+		if !ok {
+			fmt.Println("Found a non-trivial factor:", x)
+			return false, nil
+		}
+		if !step2(p, x) {
+			return false, nil
+		}
+	}
 	return true, nil
 }
 
@@ -56,10 +62,40 @@ func decomposition(n *big.Int) (d *big.Int, r *big.Int) {
 }
 
 func step1(n *big.Int) (*big.Int, bool) {
-	k := a2.BitLen() / 8
-	randNum, err := BBSGenerator_byte(k)
+	randNum, err := rand.Int(rand.Reader, n)
 	if err != nil {
 		return nil, false
 	}
-	return randNum.Mod(randNum, n), true
+
+	g := new(big.Int).GCD(nil, nil, randNum, n)
+	if g.Cmp(big.NewInt(1)) != 0 {
+		return g, false
+	}
+	return randNum, true
+}
+
+func step2(p, a *big.Int) bool {
+	one := big.NewInt(1)
+	minusOne := new(big.Int).Sub(p, one)
+
+	// p-1 = 2^s * d
+	d, s := decomposition(new(big.Int).Sub(p, one))
+
+	// x = a^d mod p
+	x := new(big.Int).Exp(a, d, p)
+	if x.Cmp(one) == 0 || x.Cmp(minusOne) == 0 {
+		return true
+	}
+
+	for i := int64(1); i < s.Int64(); i++ {
+		x.Exp(x, big.NewInt(2), p)
+
+		if x.Cmp(minusOne) == 0 {
+			return true
+		}
+		if x.Cmp(one) == 0 {
+			return false
+		}
+	}
+	return false
 }
