@@ -16,4 +16,6 @@ func main() {
 	t1, _ := rsa.MillerRabinTest(a2, 10)
 	t2, _ := rsa.MillerRabinTest(prime, 10)
 	fmt.Println("Miller-Rabin test result:", t1, t2)
+	p, q, _ := rsa.GenKey(32)
+	fmt.Println("Generated p and q:", p, q)
 }

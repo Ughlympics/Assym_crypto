@@ -109,23 +109,70 @@ func step2(p, a *big.Int) bool {
 	return false
 }
 
-func genkey(len int) (*big.Int, *big.Int, error) {
+func GenKey(len int) (*big.Int, *big.Int, error) {
 	if len < 32 {
 		return nil, nil, fmt.Errorf("key length too short")
 	}
 
-	p, err := BBSGenerator_byte(len / 2)
-	for ok, _ := MillerRabinTest(p, 8); !ok; {
-		p, err = BBSGenerator_byte(len / 2)
+	var p1 *big.Int
+	var err error
+
+	for {
+		p1, err = BBSGenerator_byte(len)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		ok, err := MillerRabinTest(p1, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if ok {
+			break
+		}
 	}
 
-	if err != nil {
-		return nil, nil, err
+	var p *big.Int
+	for i := int64(1); ; i++ {
+		p = new(big.Int).Add(new(big.Int).Mul(p1, big.NewInt(2*i)), big.NewInt(1))
+		ok, err := MillerRabinTest(p, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+		if ok {
+			break
+		}
 	}
 
-	q, err := rand.Prime(rand.Reader, len)
-	if err != nil {
-		return nil, nil, err
+	var q1 *big.Int
+
+	for {
+		q1, err = BBSGenerator_byte(len)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		ok, err := MillerRabinTest(q1, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if ok {
+			break
+		}
+	}
+
+	var q *big.Int
+	for i := int64(1); ; i++ {
+		q = new(big.Int).Add(new(big.Int).Mul(q1, big.NewInt(2*i)), big.NewInt(1))
+		ok, err := MillerRabinTest(q, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+		if ok {
+			break
+		}
 	}
 
 	return p, q, nil
