@@ -8,16 +8,12 @@ import (
 )
 
 func main() {
-	fmt.Println("This is Lab2. Please refer to the assignment instructions.")
-	var aStr2 = "35"
+	var aStr2 = "E3580DB782ED794B5B3CA47348DE8B15"
 	var a2, _ = new(big.Int).SetString(aStr2, 16)
-	fmt.Println("a2 byte length:", a2.BitLen())
-	r0, err := rand.Int(rand.Reader, a2)
-	if err != nil {
-		fmt.Println("Error generating random number:", err)
-		return
-	}
-	t, _ := rsa.MillerRabinTest(a2, 10)
-	fmt.Println("Generated random number:", r0)
-	fmt.Println("Miller-Rabin test result:", t)
+	prime, _ := rand.Prime(rand.Reader, 512)
+	fmt.Println("Generated prime:", prime)
+
+	t1, _ := rsa.MillerRabinTest(a2, 10)
+	t2, _ := rsa.MillerRabinTest(prime, 10)
+	fmt.Println("Miller-Rabin test result:", t1, t2)
 }

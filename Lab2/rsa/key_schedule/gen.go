@@ -36,6 +36,17 @@ func BBSGenerator_byte(n int) (*big.Int, error) {
 }
 
 func MillerRabinTest(p *big.Int, k int) (bool, error) {
+	if new(big.Int).Mod(p, big.NewInt(2)).Cmp(big.NewInt(0)) == 0 ||
+		new(big.Int).Mod(p, big.NewInt(3)).Cmp(big.NewInt(0)) == 0 {
+		return false, nil
+	}
+
+	for i := 5; i < 37; i += 2 {
+		if new(big.Int).Mod(p, big.NewInt(int64(i))).Cmp(big.NewInt(0)) == 0 {
+			return false, nil
+		}
+	}
+
 	for i := 0; i < k; i++ {
 		x, ok := step1(p)
 		if !ok {
@@ -78,10 +89,8 @@ func step2(p, a *big.Int) bool {
 	one := big.NewInt(1)
 	minusOne := new(big.Int).Sub(p, one)
 
-	// p-1 = 2^s * d
 	d, s := decomposition(new(big.Int).Sub(p, one))
 
-	// x = a^d mod p
 	x := new(big.Int).Exp(a, d, p)
 	if x.Cmp(one) == 0 || x.Cmp(minusOne) == 0 {
 		return true
@@ -98,4 +107,26 @@ func step2(p, a *big.Int) bool {
 		}
 	}
 	return false
+}
+
+func genkey(len int) (*big.Int, *big.Int, error) {
+	if len < 32 {
+		return nil, nil, fmt.Errorf("key length too short")
+	}
+
+	p, err := BBSGenerator_byte(len / 2)
+	for ok, _ := MillerRabinTest(p, 8); !ok; {
+		p, err = BBSGenerator_byte(len / 2)
+	}
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	q, err := rand.Prime(rand.Reader, len)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return p, q, nil
 }
