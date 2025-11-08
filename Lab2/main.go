@@ -21,13 +21,14 @@ func main() {
 	p, q, _ := key.GenKey(32)
 	fmt.Printf("p = 0x%X\nq = 0x%X\n", p, q)
 
-	n := new(big.Int).Mul(p, q)
+	alice, _ := features.NewUser("Alice")
 
-	e := big.NewInt(65537)
 	message := big.NewInt(123456789)
+	cipher := alice.Encrypt(message)
+	plain := alice.Decrypt(cipher)
 
-	ciphertext := features.Encrypt(message, e, n)
-
-	fmt.Printf("n = 0x%X\n", n)
-	fmt.Printf("Ciphertext = 0x%X\n", ciphertext)
+	fmt.Printf("N = 0x%X\n", alice.N)
+	fmt.Printf("Original: %d\n", message)
+	fmt.Printf("Cipher:   0x%X\n", cipher)
+	fmt.Printf("Decrypted:%d\n", plain)
 }
