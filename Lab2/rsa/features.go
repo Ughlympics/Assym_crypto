@@ -68,7 +68,7 @@ func NewUser(name string) (*User, error) {
 	return u, nil
 }
 
-func (u *User) Encrypt(message *big.Int) *big.Int {
+func (u *User) EncryptUser(message *big.Int) *big.Int {
 	if u.N == nil || u.E == nil {
 		panic("Encrypt: user has no public key")
 	}
@@ -77,11 +77,37 @@ func (u *User) Encrypt(message *big.Int) *big.Int {
 	return ciphertext
 }
 
-func (u *User) Decrypt(ciphertext *big.Int) *big.Int {
+func Encrypt(key, message *big.Int) *big.Int {
+	ciphertext := new(big.Int).Exp(message, big.NewInt(65537), key)
+	return ciphertext
+}
+
+func (u *User) DecryptUser(ciphertext *big.Int) *big.Int {
 	if u.d == nil || u.N == nil {
 		panic("Decrypt: user has no private key")
 	}
 
 	plaintext := new(big.Int).Exp(ciphertext, u.d, u.N)
 	return plaintext
+}
+
+func Decrypt(key, ciphertext, d *big.Int) *big.Int {
+	plaintext := new(big.Int).Exp(ciphertext, d, key)
+	return plaintext
+}
+
+func (u *User) DigitalSign(message *big.Int) *big.Int {
+	if u.d == nil || u.N == nil {
+		panic("DigitalSign: user has no private key")
+	}
+	signature := new(big.Int).Exp(message, u.d, u.N)
+	return signature
+}
+
+func (u *User) VerifySign(signature *big.Int) *big.Int {
+	if u.E == nil || u.N == nil {
+		panic("VerifySign: user has no public key")
+	}
+	verifiedMessage := new(big.Int).Exp(signature, u.E, u.N)
+	return verifiedMessage
 }

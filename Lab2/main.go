@@ -24,8 +24,8 @@ func main() {
 	alice, _ := features.NewUser("Alice")
 
 	message := big.NewInt(123456789)
-	cipher := alice.Encrypt(message)
-	plain := alice.Decrypt(cipher)
+	cipher := alice.EncryptUser(message)
+	plain := alice.DecryptUser(cipher)
 
 	fmt.Printf("N = 0x%X\n", alice.N)
 	fmt.Printf("Original: %d\n", message)
