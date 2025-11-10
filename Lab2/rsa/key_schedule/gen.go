@@ -50,7 +50,6 @@ func MillerRabinTest(p *big.Int, k int) (bool, error) {
 	for i := 0; i < k; i++ {
 		x, ok := step1(p)
 		if !ok {
-			fmt.Println("Found a non-trivial factor:", x)
 			return false, nil
 		}
 		if !step2(p, x) {
@@ -174,6 +173,95 @@ func GenKey(len int) (*big.Int, *big.Int, error) {
 			break
 		}
 	}
+
+	return p, q, nil
+}
+
+func GenKeytest(length int) (*big.Int, *big.Int, error) {
+	if length < 32 {
+		return nil, nil, fmt.Errorf("key length too short")
+	}
+
+	var err error
+	var p1, q1 *big.Int
+
+	fmt.Println("=== Generating p ===")
+	for {
+		p1, err = BBSGenerator_byte(length)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		ok, err := MillerRabinTest(p1, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if ok {
+			fmt.Printf("  Candidate p1 is prime: %X\n", p1)
+			break
+		} else {
+			fmt.Printf("  Candidate p1 failed test: %X\n", p1)
+		}
+	}
+
+	var p *big.Int
+	fmt.Println("  Searching for final p...")
+	for i := int64(1); ; i++ {
+		p = new(big.Int).Add(new(big.Int).Mul(p1, big.NewInt(2*i)), big.NewInt(1))
+		ok, err := MillerRabinTest(p, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if ok {
+			fmt.Printf("  Found prime p: %X\n\n", p)
+			break
+		} else {
+			fmt.Printf("    Candidate p (i=%d) failed: %X\n", i, p)
+		}
+	}
+
+	fmt.Println("=== Generating q ===")
+	for {
+		q1, err = BBSGenerator_byte(length)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		ok, err := MillerRabinTest(q1, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if ok {
+			fmt.Printf("  Candidate q1 is prime: %X\n", q1)
+			break
+		} else {
+			fmt.Printf("  Candidate q1 failed test: %X\n", q1)
+		}
+	}
+
+	var q *big.Int
+	fmt.Println("  Searching for final q...")
+	for i := int64(1); ; i++ {
+		q = new(big.Int).Add(new(big.Int).Mul(q1, big.NewInt(2*i)), big.NewInt(1))
+		ok, err := MillerRabinTest(q, 8)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if ok {
+			fmt.Printf("  Found prime q: %X\n", q)
+			break
+		} else {
+			fmt.Printf("    Candidate q (i=%d) failed: %X\n", i, q)
+		}
+	}
+
+	fmt.Println("\n=== Summary ===")
+	fmt.Printf("  Final p: %X\n", p)
+	fmt.Printf("  Final q: %X\n", q)
 
 	return p, q, nil
 }

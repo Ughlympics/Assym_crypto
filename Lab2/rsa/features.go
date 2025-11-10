@@ -96,7 +96,7 @@ func Decrypt(key, ciphertext, d *big.Int) *big.Int {
 	return plaintext
 }
 
-func (u *User) DigitalSign(message *big.Int) *big.Int {
+func (u *User) UserDigitalSign(message *big.Int) *big.Int {
 	if u.d == nil || u.N == nil {
 		panic("DigitalSign: user has no private key")
 	}
@@ -104,10 +104,43 @@ func (u *User) DigitalSign(message *big.Int) *big.Int {
 	return signature
 }
 
-func (u *User) VerifySign(signature *big.Int) *big.Int {
+func (u *User) UserVerifySign(message, signature *big.Int) bool {
 	if u.E == nil || u.N == nil {
 		panic("VerifySign: user has no public key")
 	}
-	verifiedMessage := new(big.Int).Exp(signature, u.E, u.N)
-	return verifiedMessage
+
+	recovered := new(big.Int).Exp(signature, u.E, u.N)
+	return recovered.Cmp(message) == 0
+}
+
+func DigitalSign(message, d, n *big.Int) *big.Int {
+	if d == nil || n == nil {
+		panic("DigitalSign: private key or modulus is missing")
+	}
+	signature := new(big.Int).Exp(message, d, n)
+	return signature
+}
+
+// VerifySign checks if the signature is valid for a given message and public key (e, n)
+func VerifySign(message, signature, n *big.Int) bool {
+	if n == nil {
+		panic("VerifySign: public key or modulus is missing")
+	}
+	e := big.NewInt(65537)
+	recovered := new(big.Int).Exp(signature, e, n)
+	return recovered.Cmp(message) == 0
+}
+
+func SendKey(sender, receiver *User, confidentialKey *big.Int) (*big.Int, *big.Int, *big.Int) {
+	k1 := receiver.EncryptUser(confidentialKey)
+	S := sender.UserDigitalSign(confidentialKey)
+	S1 := receiver.EncryptUser(S)
+	return k1, S1, S
+}
+
+func ReceiveKey(receiver *User, k1, S1 *big.Int) (*big.Int, *big.Int) {
+	k := receiver.DecryptUser(k1)
+	S := receiver.DecryptUser(S1)
+
+	return k, S
 }
